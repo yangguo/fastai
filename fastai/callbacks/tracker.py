@@ -29,7 +29,7 @@ class TrackerCallback(LearnerCallback):
             warn(f'{self.__class__} mode {self.mode} is invalid, falling back to "auto" mode.')
             self.mode = 'auto'
         mode_dict = {'min': np.less, 'max':np.greater}
-        mode_dict['auto'] = np.less if 'loss' or 'error' in self.monitor else np.greater
+        mode_dict['auto'] = np.less if 'loss' in self.monitor or 'error' in self.monitor else np.greater
         self.operator = mode_dict[self.mode]
 
     def on_train_begin(self, **kwargs:Any)->None:
@@ -94,6 +94,7 @@ class SaveModelCallback(TrackerCallback):
         if self.every=="epoch": self.learn.save(f'{self.name}_{epoch}')
         else: #every="improvement"
             current = self.get_monitor_value()
+            if isinstance(current, Tensor): current = current.cpu()
             if current is not None and self.operator(current, self.best):
                 print(f'Better model found at epoch {epoch} with {self.monitor} value: {current}.')
                 self.best = current
@@ -101,7 +102,7 @@ class SaveModelCallback(TrackerCallback):
 
     def on_train_end(self, **kwargs):
         "Load the best model."
-        if self.every=="improvement":
+        if self.every=="improvement" and os.path.isfile(self.path/self.model_dir/f'{self.name}.pth'):
             self.learn.load(f'{self.name}', purge=False)
 
 class ReduceLROnPlateauCallback(TrackerCallback):

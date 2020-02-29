@@ -134,7 +134,7 @@ Here are the detailed instructions, with an optional `TIFF` support:
 #### How to check whether you're running `Pillow` or `Pillow-SIMD`?
 
 ```
-python -c "from PIL import Image; print(Image.PILLOW_VERSION)"
+python -c "from fastai.utils.collect_env import pillow_version; print(pillow_version())"
 3.2.0.post3
 ```
 According to the author, if `PILLOW_VERSION` has a postfix, it is `Pillow-SIMD`. (Assuming that `Pillow` will never make a `.postX` release).
@@ -188,13 +188,16 @@ And a version-proof check:
 from PIL import features, Image
 from packaging import version
 
-if version.parse(Image.PILLOW_VERSION) >= version.parse("5.4.0"):
+try:    ver = Image.__version__     # PIL >= 7
+except: ver = Image.PILLOW_VERSION  # PIL <  7
+
+if version.parse(ver) >= version.parse("5.4.0"):
     if features.check_feature('libjpeg_turbo'):
         print("libjpeg-turbo is on")
     else:
         print("libjpeg-turbo is not on")
 else:
-    print(f"libjpeg-turbo' status can't be derived - need Pillow(-SIMD)? >= 5.4.0 to tell, current version {Image.PILLOW_VERSION}")
+    print(f"libjpeg-turbo' status can't be derived - need Pillow(-SIMD)? >= 5.4.0 to tell, current version {ver}")
 ```
 
 ### Conda packages
